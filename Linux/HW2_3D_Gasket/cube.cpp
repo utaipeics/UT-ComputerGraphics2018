@@ -46,10 +46,10 @@ void Cube::DrawPolygon(int a, int b, int c, int d) {
 }
 
 void Cube::Draw() {
-    DrawPolygon(0, 3, 2, 1);
+    DrawPolygon(0, 1, 3, 2);
+    DrawPolygon(4, 5, 7, 6);
     DrawPolygon(2, 3, 7, 6);
-    DrawPolygon(0, 4, 7, 3);
-    DrawPolygon(1, 2, 6, 5);
-    DrawPolygon(4, 5, 6, 7);
+    DrawPolygon(3, 1, 5, 7);
     DrawPolygon(0, 1, 5, 4);
+    DrawPolygon(0, 2, 6, 4);
 }

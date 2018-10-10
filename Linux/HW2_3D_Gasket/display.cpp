@@ -3,7 +3,7 @@
 #include "display.hpp"
 
 Display::Display(int width, int height, const std::string& title) {
-    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glutInitWindowSize(width, height);
     glutInitWindowPosition(0, 0);
     glutCreateWindow(title.c_str());
