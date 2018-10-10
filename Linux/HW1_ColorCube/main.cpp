@@ -28,23 +28,23 @@ int main(int argc, char* argv[]) {
 
     cube = new Cube();
     
+    cube->vertices().push_back(new GLfloat[3] {-1.0, 1.0, -1.0});
+    cube->vertices().push_back(new GLfloat[3] {1.0, 1.0, -1.0});
+    cube->vertices().push_back(new GLfloat[3] {-1.0, 1.0, 1.0});
+    cube->vertices().push_back(new GLfloat[3] {1.0, 1.0, 1.0});
     cube->vertices().push_back(new GLfloat[3] {-1.0, -1.0, -1.0});
     cube->vertices().push_back(new GLfloat[3] {1.0, -1.0, -1.0});
-    cube->vertices().push_back(new GLfloat[3] {1.0, 1.0, -1.0});
-    cube->vertices().push_back(new GLfloat[3] {-1.0, 1.0, -1.0});
     cube->vertices().push_back(new GLfloat[3] {-1.0, -1.0, 1.0});
     cube->vertices().push_back(new GLfloat[3] {1.0, -1.0, 1.0});
-    cube->vertices().push_back(new GLfloat[3] {1.0, 1.0, 1.0});
-    cube->vertices().push_back(new GLfloat[3] {-1.0, 1.0, 1.0});
 
+    cube->colors().push_back(new GLfloat[3] {0.0, 1.0, 0.0});
+    cube->colors().push_back(new GLfloat[3] {1.0, 1.0, 0.0});
+    cube->colors().push_back(new GLfloat[3] {0.0, 1.0, 1.0});
+    cube->colors().push_back(new GLfloat[3] {1.0, 1.0, 1.0});
     cube->colors().push_back(new GLfloat[3] {0.0, 0.0, 0.0});
     cube->colors().push_back(new GLfloat[3] {1.0, 0.0, 0.0});
-    cube->colors().push_back(new GLfloat[3] {1.0, 1.0, 0.0});
-    cube->colors().push_back(new GLfloat[3] {0.0, 1.0, 0.0});
     cube->colors().push_back(new GLfloat[3] {0.0, 0.0, 1.0});
     cube->colors().push_back(new GLfloat[3] {1.0, 0.0, 1.0});
-    cube->colors().push_back(new GLfloat[3] {1.0, 1.0, 1.0});
-    cube->colors().push_back(new GLfloat[3] {0.0, 1.0, 1.0});
 
     glutDisplayFunc(draw);
     glutMainLoop();
