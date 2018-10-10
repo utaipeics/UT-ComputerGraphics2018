@@ -32,23 +32,23 @@ int main(int argc, char* argv[]) {
     Display display(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE);
 
     cube = new Cube();
+    cube->vertices().push_back(new GLfloat[3] {-1.0, 1.0, -1.0});
+    cube->vertices().push_back(new GLfloat[3] {1.0, 1.0, -1.0});
+    cube->vertices().push_back(new GLfloat[3] {-1.0, 1.0, 1.0});
+    cube->vertices().push_back(new GLfloat[3] {1.0, 1.0, 1.0});
     cube->vertices().push_back(new GLfloat[3] {-1.0, -1.0, -1.0});
     cube->vertices().push_back(new GLfloat[3] {1.0, -1.0, -1.0});
-    cube->vertices().push_back(new GLfloat[3] {1.0, 1.0, -1.0});
-    cube->vertices().push_back(new GLfloat[3] {-1.0, 1.0, -1.0});
     cube->vertices().push_back(new GLfloat[3] {-1.0, -1.0, 1.0});
     cube->vertices().push_back(new GLfloat[3] {1.0, -1.0, 1.0});
-    cube->vertices().push_back(new GLfloat[3] {1.0, 1.0, 1.0});
-    cube->vertices().push_back(new GLfloat[3] {-1.0, 1.0, 1.0});
 
+    cube->colors().push_back(new GLfloat[3] {0.0, 1.0, 0.0});
+    cube->colors().push_back(new GLfloat[3] {1.0, 1.0, 0.0});
+    cube->colors().push_back(new GLfloat[3] {0.0, 1.0, 1.0});
+    cube->colors().push_back(new GLfloat[3] {1.0, 1.0, 1.0});
     cube->colors().push_back(new GLfloat[3] {0.0, 0.0, 0.0});
     cube->colors().push_back(new GLfloat[3] {1.0, 0.0, 0.0});
-    cube->colors().push_back(new GLfloat[3] {1.0, 1.0, 0.0});
-    cube->colors().push_back(new GLfloat[3] {0.0, 1.0, 0.0});
     cube->colors().push_back(new GLfloat[3] {0.0, 0.0, 1.0});
     cube->colors().push_back(new GLfloat[3] {1.0, 0.0, 1.0});
-    cube->colors().push_back(new GLfloat[3] {1.0, 1.0, 1.0});
-    cube->colors().push_back(new GLfloat[3] {0.0, 1.0, 1.0});
 
     glEnable(GL_DEPTH_TEST);
     glutDisplayFunc(draw);
