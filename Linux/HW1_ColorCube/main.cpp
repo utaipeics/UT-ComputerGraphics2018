@@ -1,19 +1,13 @@
-#include <iostream>
-#include <string>
 #include <GL/glut.h>
-
 #include "display.hpp"
 #include "cube.hpp"
 
-using std::cout;
-using std::endl;
-using std::string;
-
 static const int WINDOW_WIDTH = 500;
 static const int WINDOW_HEIGHT = 500;
-static const string WINDOW_TITLE = "ColorCube";
+static const std::string WINDOW_TITLE = "ColorCube";
+
 Cube* cube;
-static int x_theta;
+static int x_theta; // Clean up this part later.
 
 void draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -22,7 +16,7 @@ void draw() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glOrtho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
-    gluLookAt(1.5, 1.5, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    gluLookAt(1.5, 1.5, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
     glRotatef(x_theta, 1, 0, 0);
 
     cube->Draw();
@@ -75,5 +69,4 @@ int main(int argc, char* argv[]) {
     glutMainLoop();
 
     delete cube;
-    return 0;
 }
