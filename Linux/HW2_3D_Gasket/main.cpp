@@ -76,9 +76,22 @@ void draw_coordinate_axises() {
     glEnd();
 }
 
-void update(int time) {
-    cout << n << endl;
+void draw() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.1, 0.1, 0.1, 1.0);
 
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glOrtho(-1, 1, -1, 1, -1, 1);
+    //gluLookAt(1.5, 1.5, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    glRotatef(x_theta, 1, 0, 0);
+
+    draw_coordinate_axises();
+    divide_tetra(v[0], v[1], v[2], v[3], n);
+    glFlush();
+}
+
+void update(int time) { 
     if (n > 0 && n < 6) {
         if (!reversing) {
             n++;
@@ -97,20 +110,6 @@ void update(int time) {
     glutTimerFunc(1000, update, time);
 }
 
-void draw() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0.1, 0.1, 0.1, 1.0);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glOrtho(-1, 1, -1, 1, -1, 1);
-    //gluLookAt(1.5, 1.5, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-    glRotatef(x_theta, 1, 0, 0);
-
-    draw_coordinate_axises();
-    divide_tetra(v[0], v[1], v[2], v[3], n);
-    glFlush();
-}
 
 void handle_input(unsigned char key, int x, int y) {
     switch (key) {
@@ -135,12 +134,10 @@ int main(int argc, char* argv[]) {
     glutInitWindowPosition(0, 0);
     glutCreateWindow("3D Gasket");
 
-    n = 0;
-
     glEnable(GL_DEPTH_TEST);
     glutDisplayFunc(draw);
     glutKeyboardFunc(handle_input);
-    glutTimerFunc(100, update, 0);
+    glutTimerFunc(1000, update, 0);
 
     glutMainLoop();
 }
