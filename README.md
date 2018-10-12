@@ -1,5 +1,5 @@
 # 1071 Computer Graphics
-My handouts from my Computer Graphics class. 
+Assignments from my Computer Graphics class. 
 
 # Windows
 Windows versions are built under Borland C++ Builder.
@@ -10,5 +10,3 @@ Linux versions are written for fun. To compile it, use the following command:
 gcc -o <output_filename> <source_code_files> -lpthread -lGL -lGLU -lglut
 ```
 The OpenGL headers can be found under /usr/include/GL, if you have mesa installed, that is.
-
-In my case, `sudo emerge -av media-libs/mesa` on gentoo.
