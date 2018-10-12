@@ -108,6 +108,6 @@ void __fastcall TForm1::UpdateTetra(TObject *Sender)
         n--;
     }
 
-    Form1->Draw(Sender);
+    GLBox1->Refresh();
 }
 //---------------------------------------------------------------------------
