@@ -93,11 +93,7 @@ void draw() {
 
 void update(int time) { 
     if (n > 0 && n < 6) {
-        if (!reversing) {
-            n++;
-        } else {
-            n--;
-        }
+        n += (!reversing) ? 1 : -1;
     } else if (n == 0) {
         reversing = false;
         n++;

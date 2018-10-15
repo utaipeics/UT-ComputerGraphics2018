@@ -5,9 +5,7 @@
 static const int WINDOW_WIDTH = 500;
 static const int WINDOW_HEIGHT = 500;
 static const std::string WINDOW_TITLE = "ColorCube";
-
-Cube* cube;
-static int x_theta; // Clean up this part later.
+static Cube* cube;
 
 void draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -17,7 +15,10 @@ void draw() {
     glLoadIdentity();
     glOrtho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
     gluLookAt(1.5, 1.5, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-    glRotatef(x_theta, 1, 0, 0);
+
+    glRotatef(cube->theta_x(), 1, 0, 0);
+    glRotatef(cube->theta_y(), 0, 1, 0);
+    glRotatef(cube->theta_z(), 0, 0, 1);
 
     cube->Draw();
     glFlush();
@@ -26,10 +27,16 @@ void draw() {
 void handle_input(unsigned char key, int x, int y) {
     switch (key) {
         case 'a':
-            x_theta += 5;
+            cube->RotateX(5);
             break;
         case 'd':
-            x_theta -= 5;
+            cube->RotateX(-5);
+            break;
+        case 'w':
+            cube->RotateY(5);
+            break;
+        case 's':
+            cube->RotateY(-5);
             break;
         default:
             break;
@@ -65,7 +72,6 @@ int main(int argc, char* argv[]) {
     glEnable(GL_DEPTH_TEST);
     glutDisplayFunc(draw);
     glutKeyboardFunc(handle_input);
-    
     glutMainLoop();
 
     delete cube;

@@ -26,6 +26,29 @@ std::vector<GLfloat*>& Cube::colors() {
     return colors_;
 }
 
+float Cube::theta_x() {
+    return theta_x_;
+}
+
+float Cube::theta_y() {
+    return theta_y_;
+}
+
+float Cube::theta_z() {
+    return theta_z_;
+}
+
+void Cube::RotateX(float theta_x) {
+    theta_x_ += theta_x;
+}
+
+void Cube::RotateY(float theta_y) {
+    theta_y_ += theta_y;
+}
+
+void Cube::RotateZ(float theta_z) {
+    theta_z_ += theta_z;
+}
 
 void Cube::DrawPolygon(int a, int b, int c, int d) {
     glBegin(GL_POLYGON);
