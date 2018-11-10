@@ -8,6 +8,7 @@ class Cube {
 public:
     Cube();
     virtual ~Cube();
+    
     std::vector<GLfloat*>& vertices();
     std::vector<GLfloat*>& colors();
     float theta_x();

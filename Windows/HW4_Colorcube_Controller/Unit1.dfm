@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 267
-  Top = 148
+  Left = 417
+  Top = 316
   Width = 960
   Height = 528
   Caption = 'Form1'
@@ -79,6 +79,7 @@ object Form1: TForm1
       Min = -180
       PageSize = 0
       TabOrder = 0
+      OnChange = RotationXScrollBarChange
     end
     object RotationYScrollBar: TScrollBar
       Left = 40
@@ -89,6 +90,7 @@ object Form1: TForm1
       Min = -180
       PageSize = 0
       TabOrder = 1
+      OnChange = RotationYScrollBarChange
     end
     object RotationZScrollBar: TScrollBar
       Left = 40
@@ -99,6 +101,7 @@ object Form1: TForm1
       Min = -180
       PageSize = 0
       TabOrder = 2
+      OnChange = RotationZScrollBarChange
     end
     object ResetRotationBtn: TButton
       Left = 344
@@ -107,6 +110,7 @@ object Form1: TForm1
       Height = 81
       Caption = 'Reset'
       TabOrder = 3
+      OnClick = ResetRotationBtnClick
     end
   end
   object TranslationGroupBox: TGroupBox
@@ -167,6 +171,7 @@ object Form1: TForm1
       Min = -180
       PageSize = 0
       TabOrder = 0
+      OnChange = TranslationXScrollBarChange
     end
     object TranslationYScrollBar: TScrollBar
       Left = 40
@@ -177,6 +182,7 @@ object Form1: TForm1
       Min = -180
       PageSize = 0
       TabOrder = 1
+      OnChange = TranslationYScrollBarChange
     end
     object TranslationZScrollBar: TScrollBar
       Left = 40
@@ -187,6 +193,7 @@ object Form1: TForm1
       Min = -180
       PageSize = 0
       TabOrder = 2
+      OnChange = TranslationZScrollBarChange
     end
     object ResetTranslationBtn: TButton
       Left = 344
@@ -195,6 +202,7 @@ object Form1: TForm1
       Height = 81
       Caption = 'Reset'
       TabOrder = 3
+      OnClick = ResetTranslationBtnClick
     end
   end
   object ScalingGroupBox: TGroupBox
@@ -230,21 +238,21 @@ object Form1: TForm1
       Top = 32
       Width = 6
       Height = 13
-      Caption = '0'
+      Caption = '1'
     end
     object ScalingYValueLabel: TLabel
       Left = 312
       Top = 64
       Width = 6
       Height = 13
-      Caption = '0'
+      Caption = '1'
     end
     object ScalingZValueLabel: TLabel
       Left = 312
       Top = 96
       Width = 6
       Height = 13
-      Caption = '0'
+      Caption = '1'
     end
     object ScalingXScrollBar: TScrollBar
       Left = 40
@@ -254,7 +262,9 @@ object Form1: TForm1
       Max = 180
       Min = -180
       PageSize = 0
+      Position = 1
       TabOrder = 0
+      OnChange = ScalingXScrollBarChange
     end
     object ScalingYScrollBar: TScrollBar
       Left = 40
@@ -264,7 +274,9 @@ object Form1: TForm1
       Max = 180
       Min = -180
       PageSize = 0
+      Position = 1
       TabOrder = 1
+      OnChange = ScalingYScrollBarChange
     end
     object ScalingZScrollBar: TScrollBar
       Left = 40
@@ -274,7 +286,9 @@ object Form1: TForm1
       Max = 180
       Min = -180
       PageSize = 0
+      Position = 1
       TabOrder = 2
+      OnChange = ScalingZScrollBarChange
     end
     object ResetScalingBtn: TButton
       Left = 344
@@ -283,6 +297,7 @@ object Form1: TForm1
       Height = 81
       Caption = 'Reset'
       TabOrder = 3
+      OnClick = ResetScalingBtnClick
     end
   end
 end

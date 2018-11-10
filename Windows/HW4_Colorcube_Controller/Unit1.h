@@ -48,6 +48,18 @@ __published:	// IDE-managed Components
     TButton *ResetScalingBtn;
     void __fastcall draw(TObject *Sender);
     void __fastcall init(TObject *Sender);
+    void __fastcall RotationXScrollBarChange(TObject *Sender);
+    void __fastcall RotationYScrollBarChange(TObject *Sender);
+    void __fastcall RotationZScrollBarChange(TObject *Sender);
+    void __fastcall ResetRotationBtnClick(TObject *Sender);
+    void __fastcall TranslationXScrollBarChange(TObject *Sender);
+    void __fastcall TranslationYScrollBarChange(TObject *Sender);
+    void __fastcall TranslationZScrollBarChange(TObject *Sender);
+    void __fastcall ResetTranslationBtnClick(TObject *Sender);
+    void __fastcall ScalingXScrollBarChange(TObject *Sender);
+    void __fastcall ScalingYScrollBarChange(TObject *Sender);
+    void __fastcall ScalingZScrollBarChange(TObject *Sender);
+    void __fastcall ResetScalingBtnClick(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
     __fastcall TForm1(TComponent* Owner);
