@@ -9,21 +9,21 @@ defined_vertices = []
 current_triangle_data = []
 
 class Vertex:
-    """ Contains the (x,y,z) and (nx, ny, nz) of a vertex """
-    def __init__(self, vertex_data_list:list):
-        self.vertex_data_list = vertex_data_list
+    """ Contains the [x, y, z, nx, ny, nz] of a vertex """
+    def __init__(self, vertex_data:list):
+        self.vertex_data = vertex_data # list
 
     def __str__(self):
-        return " ".join(self.vertex_data_list)
+        return " ".join(self.vertex_data)
 
     def __eq__(self, other):
         if isinstance(other, Vertex):
-            return self.vertex_data_list == other.vertex_data_list
+            return self.vertex_data == other.vertex_data
         return False
 
 
 class Colors:
-    """ Contains the front_colors list [fr, fg, fb] and back_colors list [br, bg, bb] """
+    """ Contains the front_colors and back_colors list [fr, fg, fb, br, bg, bb] """
     def __init__(self, colors_data:list):
         self.front_colors = colors_data[0:3]
         self.back_colors = colors_data[3:6]
@@ -34,21 +34,21 @@ class Colors:
 
 class SimpleTriangle:
     """ Contains three vertices. No colors. """
-    def __init__(self, vertices_id_list:list):
-        self.vertices_id_list = vertices_id_list
+    def __init__(self, vertices_id:list):
+        self.vertices_ids = vertices_ids # list
 
     def __str__(self):
-        return " ".join(self.vertices_id_list)
+        return " ".join(self.vertices_ids)
 
 
 class ColoredTriangle(SimpleTriangle):
     """ Contains three vertices. Has colors. """
-    def __init__(self, colors:Colors, vertices_id_list:list):
-        SimpleTriangle.__init__(self, vertices_id_list)
+    def __init__(self, colors:Colors, vertices_ids:list):
+        SimpleTriangle.__init__(self, vertices_ids)
         self.colors = colors
 
     def __str__(self):
-        return " ".join(self.vertices_id_list) + " " + self.colors.__str__()
+        return " ".join(self.vertices_ids) + " " + self.colors.__str__()
 
 
 def build_record():
@@ -76,7 +76,6 @@ def build_record():
 
         for i in range(1, 4):
             v = Vertex(current_triangle_data[i].split(' '))
-
             # If this vertex has already been defined,
             # we find its index in the list and append the index to vertices_id.
             if v in defined_vertices:
@@ -93,7 +92,11 @@ def build_record():
 
 
 def parse(tri_file:str):
+    with open(tri_file, 'r') as f:
+        total_lines_count = sum(1 for line in f)
+
     with open(tri_file, 'r') as f: 
+        count = 0
         for line in f:
             line = line.rstrip()
             if line == 'Triangle':
@@ -101,6 +104,10 @@ def parse(tri_file:str):
                 current_triangle_data.clear()
             else:
                 current_triangle_data.append(line)
+            count += 1
+            sys.stdout.write("Processing: {f} (Parsed {n} / {total} lines)\r".format(
+                f=tri_file, n=count, total=total_lines_count))
+            sys.stdout.flush()
         # Write the last record.
         build_record()
 
@@ -151,9 +158,17 @@ if __name__ == '__main__':
         print_version()
 
     else:
-        input_file = sys.argv[1]
-        new_file = input_file.lower().split('.tri')[0] + '_new.tri'
-        
-        parse(input_file)
-        write_result(new_file)
-        print("Converted file written to {f}".format(f=new_file))
+        current = 1
+        while current < len(sys.argv):
+            input_file = sys.argv[current]
+            new_file = input_file.split('.TRI')[0] + '_new.tri'
+            parse(input_file)
+            write_result(new_file)
+            
+            simple_triangles.clear()
+            colored_triangles.clear()
+            defined_vertices.clear()
+            current_triangle_data.clear()
+
+            print("Converted file written to {f}\n".format(f=new_file))
+            current += 1
