@@ -51,7 +51,7 @@ class ColoredTriangle(SimpleTriangle):
         return " ".join(self.vertices_id_list) + " " + self.colors.__str__()
 
 
-def build():
+def build_record():
     vertices_id = []
 
     if len(current_triangle_data) == 3: # simple triangle
@@ -92,35 +92,39 @@ def build():
         colored_triangles.append(ColoredTriangle(colors, vertices_id))
 
 
-def parse(tri_file:str): 
+def parse(tri_file:str):
     with open(tri_file, 'r') as f: 
         for line in f:
             line = line.rstrip()
-
             if line == 'Triangle':
-                build()
+                build_record()
                 current_triangle_data.clear()
             else:
                 current_triangle_data.append(line)
-
         # Write the last record.
-        build()
+        build_record()
 
-    with open(tri_file.lower().split('.tri')[0] + '_new.tri', 'w') as f:
+
+def write_result(tri_file:str):
+    with open(tri_file, 'w') as f:
+        # Write metadata.
         f.write('Simple: ' + str(len(simple_triangles)) + '\n')
         f.write('Color: ' + str(len(colored_triangles)) + '\n')
         f.write('Vertices: ' + str(len(defined_vertices)) + '\n')
 
+        # Write all simple triangles.
         count = 0
         for st in simple_triangles:
             f.write(str(count) + " " + st.__str__() + '\n')
             count += 1
 
+        # Write all colored triangles.
         count = 0
         for ct in colored_triangles:
             f.write(str(count) + " " + ct.__str__() + '\n')
             count += 1
 
+        # Write all defined vertices.
         count = 0
         for v in defined_vertices:
             f.write(str(count) + " " + v.__str__() + '\n')
@@ -129,6 +133,7 @@ def parse(tri_file:str):
 
 def print_help():
     print("Usage: {0} <filename.tri>".format(sys.argv[0]))
+
 
 def print_version():
     print("Tri Model Format Converter 1.0\n"
@@ -141,7 +146,14 @@ def print_version():
 if __name__ == '__main__':
     if len(sys.argv) <= 1:
         print_help()
+
     elif sys.argv[1] == '-v' or sys.argv[1] == '--version':
         print_version()
+
     else:
-        parse(sys.argv[1])
+        input_file = sys.argv[1]
+        new_file = input_file.lower().split('.tri')[0] + '_new.tri'
+        
+        parse(input_file)
+        write_result(new_file)
+        print("Converted file written to {f}".format(f=new_file))
