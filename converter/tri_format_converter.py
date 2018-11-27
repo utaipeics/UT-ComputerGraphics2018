@@ -11,7 +11,7 @@ current_triangle_data = []
 class Vertex:
     """ Contains the [x, y, z, nx, ny, nz] of a vertex """
     def __init__(self, vertex_data:list):
-        self.vertex_data = vertex_data # list
+        self.vertex_data = vertex_data # [x, y, z, nx, ny, nz]
 
     def __str__(self):
         return " ".join(self.vertex_data)
@@ -25,8 +25,8 @@ class Vertex:
 class Colors:
     """ Contains the front_colors and back_colors list [fr, fg, fb, br, bg, bb] """
     def __init__(self, colors_data:list):
-        self.front_colors = colors_data[0:3]
-        self.back_colors = colors_data[3:6]
+        self.front_colors = colors_data[0:3] # [fr, fg, fb]
+        self.back_colors = colors_data[3:6] # [br, bg, bb]
 
     def __str__(self):
         return " ".join(self.front_colors) + " " + " ".join(self.back_colors)
@@ -35,7 +35,7 @@ class Colors:
 class SimpleTriangle:
     """ Contains three vertices. No colors. """
     def __init__(self, vertices_id:list):
-        self.vertices_ids = vertices_ids # list
+        self.vertices_ids = vertices_ids # [v1, v2, v3]
 
     def __str__(self):
         return " ".join(self.vertices_ids)
