@@ -34,7 +34,7 @@ class Colors:
 
 class SimpleTriangle:
     """ Contains three vertices. No colors. """
-    def __init__(self, vertices_id:list):
+    def __init__(self, vertices_ids:list):
         self.vertices_ids = vertices_ids # [v1, v2, v3]
 
     def __str__(self):
