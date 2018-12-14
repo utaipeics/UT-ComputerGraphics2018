@@ -99,7 +99,7 @@ def parse(tri_file:str):
         count = 0
         for line in f:
             line = line.rstrip()
-            if line == 'Triangle':
+            if 'Triangle' in line:
                 build_record()
                 current_triangle_data.clear()
             else:
