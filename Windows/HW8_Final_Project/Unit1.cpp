@@ -1,5 +1,6 @@
 //---------------------------------------------------------------------------
 #include <string>
+#include <vector>
 #include <fstream>
 #include <sstream>
 #include <vcl.h>
@@ -11,12 +12,23 @@
 #pragma link "GLCtrl"
 #pragma resource "*.dfm"
 
+using std::string;
+using std::vector;
+using std::stringstream;
+
+void RenderObject(int viewport_x, int viewport_y, int viewport_width, int viewport_height,
+        GLfloat ortho_size, GLfloat cam_x, GLfloat cam_y, GLfloat cam_z,
+        GLfloat cam_nx, GLfloat cam_ny, GLfloat cam_nz);
+void DrawTriangle(GLfloat* vertex1, GLfloat* vertex2, GLfloat* vertex3,
+        GLfloat* front_color, GLfloat* back_color);
 void DrawPolygon(int a, int b, int c, int d);
 void DrawColorCube();
+void DrawCustomModel();
 void DrawLights();
 void DrawAxises();
+GLfloat Max(GLfloat v1, GLfloat v2, GLfloat v3);
 
-TForm1 *Form1;
+vector<string> Split(const string& s, const char delimiter);
 
 /* Cube's data */
 GLfloat vertices[][3] = {
@@ -30,6 +42,26 @@ GLfloat colors[][3] = {
     {1.0, 1.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0},
     {1.0, 0.0, 1.0}, {1.0, 1.0, 1.0}, {0.0, 1.0, 1.0}
 };
+
+/* Loaded model's data */
+struct Vertex {
+    GLfloat x, y, z;
+    GLfloat nx, ny, nz;
+};
+
+struct Triangle {
+    int vertex1, vertex2, vertex3; // Vertices ref ids.
+    int fr, fg, fb, br, bg, bb;    // front-rgb and back-rgb.
+};
+
+Triangle* model_triangles;
+Vertex* model_vertices;
+
+int simple_triangles_count;
+int colored_triangles_count;
+int vertices_count;
+
+GLfloat calibration_offset_x, calibration_offset_y, calibration_offset_z;
 
 /* Lights */
 GLfloat red_light_ambient[] = { 0.3f, 0.0f, 0.0f, 0.0f };
@@ -66,67 +98,69 @@ GLfloat gold_diffuse[] = { 0.75164f, 0.60648f, 0.22648f, 1.0f };
 GLfloat gold_specular[] = { 0.628281f, 0.555802f, 0.366065f, 1.0f };
 
 
-static GLfloat theta_x;
-static GLfloat theta_y;
-static GLfloat theta_z;
-
-static GLfloat trans_x;
-static GLfloat trans_y;
-static GLfloat trans_z;
-
-static GLfloat scale_x;
-static GLfloat scale_y;
-static GLfloat scale_z;
-
-static bool lighting_enabled;
-static bool red_light_on;
-static bool green_light_on;
-static bool blue_light_on;
-
-static bool single_viewport;
-static GLenum shading_mode;
-
+TForm1 *Form1;
+GLfloat world_size;
+GLfloat cam_dist;
+GLfloat scale;
+GLfloat theta_x, theta_y, theta_z;
+GLfloat trans_x, trans_y, trans_z;
+GLfloat scale_x, scale_y, scale_z;
+GLenum shading_mode;
+bool lighting_enabled;
+bool red_light_on, green_light_on, blue_light_on;
+bool single_viewport;
+bool obj_is_custom_model;
+bool not_freed;
 //---------------------------------------------------------------------------
 __fastcall TForm1::TForm1(TComponent* Owner)
-    : TForm(Owner)
-{
+    : TForm(Owner) {
+    simple_triangles_count = 0;
+    colored_triangles_count = 0;
+    vertices_count = 0;
+
+    world_size = 10.0f;
+    cam_dist = 0.5f;
+
+    calibration_offset_x = calibration_offset_y = calibration_offset_z = 0;
+
+    scale = 1.0;
     theta_x = theta_y = theta_z = 0;
     trans_x = trans_y = trans_z = 0;
     scale_x = scale_y = scale_z = 3;
+
+    shading_mode = GL_SMOOTH;
+    
+    selected_material_ambient = NULL;
+    selected_material_diffuse = NULL;
+    selected_material_specular = NULL;
 
     lighting_enabled = false;
     red_light_on = true;
     green_light_on = true;
     blue_light_on = true;
 
-    selected_material_ambient = NULL;
-    selected_material_diffuse = NULL;
-    selected_material_specular = NULL;
-
     single_viewport = true;
-    shading_mode = GL_SMOOTH;
+    obj_is_custom_model = false;
+    not_freed = false;
 }
 
 
 //---------------------------------------------------------------------------
-void __fastcall TForm1::init(TObject *Sender)
-{
+void __fastcall TForm1::init(TObject *Sender) {
     glEnable(GL_DEPTH_TEST);
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::draw(TObject *Sender)
-{
+void __fastcall TForm1::draw(TObject *Sender) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.1, 0.1, 0.1, 1.0);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glOrtho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
-
-    // Handle shading mode.
+    // Shading
     glPolygonMode(GL_FRONT, (shading_mode == GL_LINE) ? GL_LINE : GL_FILL);
-    glPolygonMode(GL_BACK, GL_LINE);
+    glPolygonMode(GL_BACK, (shading_mode == GL_LINE) ? GL_LINE : GL_FILL);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+    glShadeModel(shading_mode);
 
+    // Lighting
     if (lighting_enabled) {
         glEnable(GL_LIGHTING);
         glEnable(GL_COLOR_MATERIAL);
@@ -135,127 +169,92 @@ void __fastcall TForm1::draw(TObject *Sender)
         glDisable(GL_COLOR_MATERIAL);
     }
 
+    // Material
     if (selected_material_ambient && selected_material_diffuse && selected_material_specular) {
         glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, selected_material_ambient);
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, selected_material_diffuse);        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, selected_material_specular);
     }
-    
-    glShadeModel(shading_mode);
 
-    // Draw axises.
+    // Render object(s)
     if (single_viewport) {
-        glViewport(0, 0, GLBox1->Width, GLBox1->Height);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glOrtho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
-        gluLookAt(0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-        DrawLights();
-        DrawAxises();
+        // Render only one viewport, which fills the entire GLBox.
+        RenderObject(0, 0, GLBox1->Width, GLBox1->Height,
+                world_size, cam_dist, cam_dist, cam_dist, 0.0, 1.0, 0.0);
     } else {
-        glViewport(GLBox1->Width / 2, 0, GLBox1->Width / 2, GLBox1->Height / 2);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glOrtho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
-        gluLookAt(0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-        DrawLights();
-        DrawAxises();
+        // Render object within bottom-right viewport.
+        RenderObject(GLBox1->Width / 2, 0, GLBox1->Width / 2, GLBox1->Height / 2,
+                world_size, cam_dist, 0.0, 0.0, 0.0, 1.0, 0.0);
 
-        glViewport(0, 0, GLBox1->Width / 2, GLBox1->Height / 2);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glOrtho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
-        gluLookAt(0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-        DrawLights();
-        DrawAxises();
+        // Render object within bottom-left viewport.
+        RenderObject(0, 0, GLBox1->Width / 2, GLBox1->Height / 2,
+                world_size, 0.0, 0.0, cam_dist, 0.0, 1.0, 0.0);
 
-        glViewport(0, GLBox1->Height / 2, GLBox1->Width / 2, GLBox1->Height / 2);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glOrtho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
-        gluLookAt(0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
-        DrawLights();
-        DrawAxises();
+        // Render object within top-left viewport.
+        RenderObject(0, GLBox1->Height / 2, GLBox1->Width / 2, GLBox1->Height / 2,
+                world_size, 0.0, cam_dist, 0.0, 1.0, 0.0, 0.0);
 
-        glViewport(GLBox1->Width / 2, GLBox1->Height / 2, GLBox1->Width / 2, GLBox1->Height / 2);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glOrtho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
-        gluLookAt(0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-        DrawLights();
-        DrawAxises();
-    }
-
-
-    if (single_viewport) {
-        glViewport(0, 0, GLBox1->Width, GLBox1->Height);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glOrtho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
-        gluLookAt(0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-
-        glTranslatef(trans_x, trans_y, trans_z);
-        glRotatef(theta_x, 1, 0, 0);
-        glRotatef(theta_y, 0, 1, 0);
-        glRotatef(theta_z, 0, 0, 1);
-        glScalef(scale_x, scale_y, scale_z);
-        DrawColorCube();
-    } else {
-        glViewport(GLBox1->Width / 2, 0, GLBox1->Width / 2, GLBox1->Height / 2);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glOrtho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
-        gluLookAt(0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-
-        glTranslatef(trans_x, trans_y, trans_z);
-        glRotatef(theta_x, 1, 0, 0);
-        glRotatef(theta_y, 0, 1, 0);
-        glRotatef(theta_z, 0, 0, 1);
-        glScalef(scale_x, scale_y, scale_z);
-        DrawColorCube();
-
-        glViewport(0, 0, GLBox1->Width / 2, GLBox1->Height / 2);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glOrtho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
-        gluLookAt(0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-
-        glTranslatef(trans_x, trans_y, trans_z);
-        glRotatef(theta_x, 1, 0, 0);
-        glRotatef(theta_y, 0, 1, 0);
-        glRotatef(theta_z, 0, 0, 1);
-        glScalef(scale_x, scale_y, scale_z);
-        DrawColorCube();
-
-        glViewport(0, GLBox1->Height / 2, GLBox1->Width / 2, GLBox1->Height / 2);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glOrtho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
-        gluLookAt(0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
-
-        glTranslatef(trans_x, trans_y, trans_z);
-        glRotatef(theta_x, 1, 0, 0);
-        glRotatef(theta_y, 0, 1, 0);
-        glRotatef(theta_z, 0, 0, 1);
-        glScalef(scale_x, scale_y, scale_z);
-        DrawColorCube();
-
-        glViewport(GLBox1->Width / 2, GLBox1->Height / 2, GLBox1->Width / 2, GLBox1->Height / 2);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glOrtho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
-        gluLookAt(0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-
-        glTranslatef(trans_x, trans_y, trans_z);
-        glRotatef(theta_x, 1, 0, 0);
-        glRotatef(theta_y, 0, 1, 0);
-        glRotatef(theta_z, 0, 0, 1);
-        glScalef(scale_x, scale_y, scale_z);
-        DrawColorCube();
+        // Render object within top-right viewport.
+        RenderObject(GLBox1->Width / 2, GLBox1->Height / 2, GLBox1->Width / 2, GLBox1->Height / 2,
+                world_size, cam_dist, cam_dist, cam_dist, 0.0, 1.0, 0.0);
     }
     
     glFlush();
 }
 //---------------------------------------------------------------------------
+void RenderObject(int viewport_x, int viewport_y, int viewport_width, int viewport_height,
+        GLfloat ortho_size, GLfloat cam_x, GLfloat cam_y, GLfloat cam_z,
+        GLfloat cam_nx, GLfloat cam_ny, GLfloat cam_nz) {
+
+    glViewport(viewport_x, viewport_y, viewport_width, viewport_height);
+
+    // Render lights and axies.
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glOrtho(-ortho_size, ortho_size, -ortho_size, ortho_size, -ortho_size, ortho_size);
+    gluLookAt(cam_x, cam_y, cam_z, 0.0, 0.0, 0.0, cam_nx, cam_ny, cam_nz);
+    DrawLights();
+    DrawAxises();
+
+    // Render colorcube.
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glOrtho(-ortho_size, ortho_size, -ortho_size, ortho_size, -ortho_size, ortho_size);
+    gluLookAt(cam_x, cam_y, cam_z, 0.0, 0.0, 0.0, cam_nx, cam_ny, cam_nz);
+    glTranslatef(trans_x * world_size / 180, trans_y * world_size / 180, trans_z * world_size / 180);
+    glRotatef(theta_x, 1, 0, 0);
+    glRotatef(theta_y, 0, 1, 0);
+    glRotatef(theta_z, 0, 0, 1);
+    glScalef(scale_x, scale_y, scale_z);
+
+    if (obj_is_custom_model) {
+        glRotatef(-92, 1, 0, 0);
+        glRotatef(-4, 0, 1, 0);
+        DrawCustomModel();
+    } else {
+        DrawColorCube();
+    }
+}
+
+void DrawTriangle(GLfloat* vertex1, GLfloat* vertex2, GLfloat* vertex3,
+        GLfloat* front_color, GLfloat* back_color) {
+
+    glBegin(GL_TRIANGLES);
+        glEnable(GL_CULL_FACE);
+        
+        glCullFace(GL_BACK);
+        glColor3fv(front_color);
+        glVertex3fv(vertex1);
+        glVertex3fv(vertex2);
+        glVertex3fv(vertex3);
+
+        glCullFace(GL_FRONT);
+        glColor3fv(back_color);
+        glVertex3fv(vertex1);
+        glVertex3fv(vertex2);
+        glVertex3fv(vertex3);
+    glEnd();
+}
+
 void DrawPolygon(int a, int b, int c, int d) {
     glBegin(GL_POLYGON);
         glColor3fv(colors[a]);
@@ -276,6 +275,29 @@ void DrawColorCube() {
     DrawPolygon(1, 2, 6, 5);
     DrawPolygon(4, 5, 6, 7);
     DrawPolygon(0, 1, 5, 4);
+}
+
+void DrawCustomModel() {
+    for (int i = 0; i < colored_triangles_count; i++) {
+        Vertex& v1 = model_vertices[ model_triangles[i].vertex1 ];
+        Vertex& v2 = model_vertices[ model_triangles[i].vertex2 ];
+        Vertex& v3 = model_vertices[ model_triangles[i].vertex3 ];
+
+        GLfloat fr = model_triangles[i].fr / 255.0f;
+        GLfloat fg = model_triangles[i].fg / 255.0f;
+        GLfloat fb = model_triangles[i].fb / 255.0f;
+        GLfloat br = model_triangles[i].br / 255.0f;
+        GLfloat bg = model_triangles[i].bg / 255.0f;
+        GLfloat bb = model_triangles[i].bb / 255.0f;
+
+        GLfloat vertex1[3] = { v1.x - calibration_offset_x, v1.y - calibration_offset_y, v1.z - calibration_offset_z};
+        GLfloat vertex2[3] = { v2.x - calibration_offset_x, v2.y - calibration_offset_y, v2.z - calibration_offset_z};
+        GLfloat vertex3[3] = { v3.x - calibration_offset_x, v3.y - calibration_offset_y, v3.z - calibration_offset_z};
+        GLfloat front_color[3] = { fr, fg, fb };
+        GLfloat back_color[3] = { br, bg, bb };
+
+        DrawTriangle(vertex1, vertex2, vertex3, front_color, back_color);
+    }
 }
 
 void DrawLights() {
@@ -318,45 +340,39 @@ void DrawLights() {
 
 void DrawAxises() {
     glBegin(GL_LINES);
-    glColor3f(1, 0, 0);
-    glVertex3f(0, 0, 0);
-    glVertex3f(10, 0, 0);
+        glColor3f(1, 0, 0);
+        glVertex3f(0, 0, 0);
+        glVertex3f(world_size, 0, 0);
 
-    glColor3f(0, 1, 0);
-    glVertex3f(0, 0, 0);
-    glVertex3f(0, 10, 0);
+        glColor3f(0, 1, 0);
+        glVertex3f(0, 0, 0);
+        glVertex3f(0, world_size, 0);
 
-    glColor3f(0, 0, 1);
-    glVertex3f(0, 0, 0);
-    glVertex3f(0, 0, 10);
+        glColor3f(0, 0, 1);
+        glVertex3f(0, 0, 0);
+        glVertex3f(0, 0, world_size);
     glEnd();
 }
-
 //---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-void __fastcall TForm1::RotationXScrollBarChange(TObject *Sender)
-{
+void __fastcall TForm1::RotationXScrollBarChange(TObject *Sender) {
     theta_x = RotationXScrollBar->Position;
     RotationXValueLabel->Caption = (int) theta_x;
     GLBox1->Invalidate();
 }
 
-void __fastcall TForm1::RotationYScrollBarChange(TObject *Sender)
-{
+void __fastcall TForm1::RotationYScrollBarChange(TObject *Sender) {
     theta_y = RotationYScrollBar->Position;
     RotationYValueLabel->Caption = (int) theta_y;
     GLBox1->Invalidate();
 }
 
-void __fastcall TForm1::RotationZScrollBarChange(TObject *Sender)
-{
+void __fastcall TForm1::RotationZScrollBarChange(TObject *Sender) {
     theta_z = RotationZScrollBar->Position;
     RotationZValueLabel->Caption = (int) theta_z;
     GLBox1->Invalidate();
 }
 
-void __fastcall TForm1::ResetRotationBtnClick(TObject *Sender)
-{
+void __fastcall TForm1::ResetRotationBtnClick(TObject *Sender) {
     theta_x = 0;
     theta_y = 0;
     theta_z = 0;
@@ -373,29 +389,25 @@ void __fastcall TForm1::ResetRotationBtnClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-void __fastcall TForm1::TranslationXScrollBarChange(TObject *Sender)
-{
+void __fastcall TForm1::TranslationXScrollBarChange(TObject *Sender) {
     trans_x = TranslationXScrollBar->Position;
     TranslationXValueLabel->Caption = (int) trans_x;
     GLBox1->Invalidate();
 }
 
-void __fastcall TForm1::TranslationYScrollBarChange(TObject *Sender)
-{
+void __fastcall TForm1::TranslationYScrollBarChange(TObject *Sender) {
     trans_y = TranslationYScrollBar->Position;
     TranslationYValueLabel->Caption = (int) trans_y;
     GLBox1->Invalidate();
 }
 
-void __fastcall TForm1::TranslationZScrollBarChange(TObject *Sender)
-{
+void __fastcall TForm1::TranslationZScrollBarChange(TObject *Sender) {
     trans_z = TranslationZScrollBar->Position;
     TranslationZValueLabel->Caption = (int) trans_z;
     GLBox1->Invalidate();
 }
 
-void __fastcall TForm1::ResetTranslationBtnClick(TObject *Sender)
-{
+void __fastcall TForm1::ResetTranslationBtnClick(TObject *Sender) {
     trans_x = 0;
     trans_y = 0;
     trans_z = 0;
@@ -411,46 +423,41 @@ void __fastcall TForm1::ResetTranslationBtnClick(TObject *Sender)
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::ScalingXScrollBarChange(TObject *Sender)
-{
+void __fastcall TForm1::ScalingXScrollBarChange(TObject *Sender) {
     scale_x = ScalingXScrollBar->Position;
     ScalingXValueLabel->Caption = (int) scale_x;
     GLBox1->Invalidate();
 }
 
-void __fastcall TForm1::ScalingYScrollBarChange(TObject *Sender)
-{
+void __fastcall TForm1::ScalingYScrollBarChange(TObject *Sender) {
     scale_y = ScalingYScrollBar->Position;
     ScalingYValueLabel->Caption = (int) scale_y;
     GLBox1->Invalidate();
 }
 
-void __fastcall TForm1::ScalingZScrollBarChange(TObject *Sender)
-{
+void __fastcall TForm1::ScalingZScrollBarChange(TObject *Sender) {
     scale_z = ScalingZScrollBar->Position;
     ScalingZValueLabel->Caption = (int) scale_z;
     GLBox1->Invalidate();
 }
 
-void __fastcall TForm1::ResetScalingBtnClick(TObject *Sender)
-{
-    scale_x = 1;
-    scale_y = 1;
-    scale_z = 1;
+void __fastcall TForm1::ResetScalingBtnClick(TObject *Sender) {
+    scale_x = 3;
+    scale_y = 3;
+    scale_z = 3;
 
-    ScalingXScrollBar->Position = 1;
-    ScalingYScrollBar->Position = 1;
-    ScalingZScrollBar->Position = 1;
+    ScalingXScrollBar->Position = 3;
+    ScalingYScrollBar->Position = 3;
+    ScalingZScrollBar->Position = 3;
 
-    ScalingXValueLabel->Caption = 1;
-    ScalingYValueLabel->Caption = 1;
-    ScalingZValueLabel->Caption = 1;
+    ScalingXValueLabel->Caption = 3;
+    ScalingYValueLabel->Caption = 3;
+    ScalingZValueLabel->Caption = 3;
 
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::SetRotation(int new_theta_x, int new_theta_y, int new_theta_z)
-{
+void __fastcall TForm1::SetRotation(int new_theta_x, int new_theta_y, int new_theta_z) {
     theta_x = new_theta_x;
     theta_y = new_theta_y;
     theta_z = new_theta_z;
@@ -466,104 +473,79 @@ void __fastcall TForm1::SetRotation(int new_theta_x, int new_theta_y, int new_th
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Iso1BtnClick(TObject *Sender)
-{
+void __fastcall TForm1::Iso1BtnClick(TObject *Sender) {
     SetRotation(0, 0, 0);
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::IsoBtn2Click(TObject *Sender)
-{
+void __fastcall TForm1::IsoBtn2Click(TObject *Sender) {
     SetRotation(0, -90, 0);
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Iso3BtnClick(TObject *Sender)
-{
+void __fastcall TForm1::Iso3BtnClick(TObject *Sender) {
     SetRotation(0, -180, 0);
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Iso4BtnClick(TObject *Sender)
-{
+void __fastcall TForm1::Iso4BtnClick(TObject *Sender) {
     SetRotation(0, 90, 0);
 }
 //---------------------------------------------------------------------------
-
-void __fastcall TForm1::Iso8BtnClick(TObject *Sender)
-{
+void __fastcall TForm1::Iso8BtnClick(TObject *Sender) {
     SetRotation(0, 0, 180);
 }
 //---------------------------------------------------------------------------
-
-void __fastcall TForm1::Iso5BtnClick(TObject *Sender)
-{
+void __fastcall TForm1::Iso5BtnClick(TObject *Sender) {
     SetRotation(0, 90, 180);
 }
 //---------------------------------------------------------------------------
-
-void __fastcall TForm1::Iso6BtnClick(TObject *Sender)
-{
+void __fastcall TForm1::Iso6BtnClick(TObject *Sender) {
     SetRotation(0, 180, 180);
 }
 //---------------------------------------------------------------------------
-
-void __fastcall TForm1::Iso7BtnClick(TObject *Sender)
-{
+void __fastcall TForm1::Iso7BtnClick(TObject *Sender) {
     SetRotation(0, -90, 180);
 }
 //---------------------------------------------------------------------------
-
-void __fastcall TForm1::RedLightBoxClick(TObject *Sender)
-{
+void __fastcall TForm1::RedLightBoxClick(TObject *Sender) {
     red_light_on = !red_light_on;
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-
-void __fastcall TForm1::GreenLightBoxClick(TObject *Sender)
-{
+void __fastcall TForm1::GreenLightBoxClick(TObject *Sender) {
     green_light_on = !green_light_on;
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-
-void __fastcall TForm1::BlueLightBoxClick(TObject *Sender)
-{
+void __fastcall TForm1::BlueLightBoxClick(TObject *Sender) {
     blue_light_on = !blue_light_on;
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::LineShadingBtnClick(TObject *Sender)
-{
+void __fastcall TForm1::LineShadingBtnClick(TObject *Sender) {
     shading_mode = GL_LINE;
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::FlatShadingBtnClick(TObject *Sender)
-{
+void __fastcall TForm1::FlatShadingBtnClick(TObject *Sender) {
     shading_mode = GL_FLAT;
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::SmoothShadingBtnClick(TObject *Sender)
-{
+void __fastcall TForm1::SmoothShadingBtnClick(TObject *Sender) {
     shading_mode = GL_SMOOTH;
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::SingleViewportBtnClick(TObject *Sender)
-{
+void __fastcall TForm1::SingleViewportBtnClick(TObject *Sender) {
     single_viewport = true;
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::FourViewportBtnClick(TObject *Sender)
-{
+void __fastcall TForm1::FourViewportBtnClick(TObject *Sender) {
     single_viewport = false;
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-
-void __fastcall TForm1::LightingEnabledBoxClick(TObject *Sender)
-{
+void __fastcall TForm1::LightingEnabledBoxClick(TObject *Sender) {
     lighting_enabled = !lighting_enabled;
 
     RedLightBox->Enabled = lighting_enabled;
@@ -573,39 +555,37 @@ void __fastcall TForm1::LightingEnabledBoxClick(TObject *Sender)
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-
-void __fastcall TForm1::BronzeMaterialBtnClick(TObject *Sender)
-{
+void __fastcall TForm1::BronzeMaterialBtnClick(TObject *Sender) {
     selected_material_ambient = bronze_ambient;
     selected_material_diffuse = bronze_diffuse;
     selected_material_specular = bronze_specular;
 
+    LightingEnabledBox->Checked = true;
+    lighting_enabled = true;
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-
-void __fastcall TForm1::SilverMaterialBtnClick(TObject *Sender)
-{
+void __fastcall TForm1::SilverMaterialBtnClick(TObject *Sender) {
     selected_material_ambient = silver_ambient;
     selected_material_diffuse = silver_diffuse;
     selected_material_specular = silver_specular;
 
+    LightingEnabledBox->Checked = true;
+    lighting_enabled = true;
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-
-void __fastcall TForm1::GoldMaterialBtnClick(TObject *Sender)
-{
+void __fastcall TForm1::GoldMaterialBtnClick(TObject *Sender) {
     selected_material_ambient = gold_ambient;
     selected_material_diffuse = gold_diffuse;
     selected_material_specular = gold_specular;
 
+    LightingEnabledBox->Checked = true;
+    lighting_enabled = true;
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-
-void __fastcall TForm1::OriginalMaterialBtnClick(TObject *Sender)
-{
+void __fastcall TForm1::OriginalMaterialBtnClick(TObject *Sender) {
     selected_material_ambient = NULL;
     selected_material_diffuse = NULL;
     selected_material_specular = NULL;
@@ -613,12 +593,154 @@ void __fastcall TForm1::OriginalMaterialBtnClick(TObject *Sender)
     GLBox1->Invalidate();
 }
 //---------------------------------------------------------------------------
-
-void __fastcall TForm1::OpenModelFileBtnClick(TObject *Sender)
-{
+void __fastcall TForm1::OpenModelFileBtnClick(TObject *Sender) {
     if (OD->Execute()) {
-        // what
+        MsgLabel->Caption = "Loading model... Please wait.";
+        
+        bool min_max_initialized = false;
+        GLfloat min_vertex_x = 0;
+        GLfloat max_vertex_x = 0;
+        GLfloat min_vertex_y = 0;
+        GLfloat max_vertex_y = 0;
+        GLfloat min_vertex_z = 0;
+        GLfloat max_vertex_z = 0;
+
+        AnsiString directory = ExtractFileDir(OD->FileName);
+        AnsiString filename = ExtractFileName(OD->FileName);
+        AnsiString filepath = directory + "\\" + filename;
+
+        std::ifstream file(filepath.c_str());
+        string line;
+
+        // Get the number of simple triangles.
+        std::getline(file, line);
+        stringstream(Split(line, ':')[1]) >> simple_triangles_count;
+
+        // Get the number of colored triangles.
+        std::getline(file, line);
+        stringstream(Split(line, ':')[1]) >> colored_triangles_count;
+        model_triangles = (Triangle*) malloc(colored_triangles_count * sizeof(Triangle));
+
+        // Get the number of defined vertices.
+        std::getline(file, line);
+        stringstream(Split(line, ':')[1]) >> vertices_count;
+        model_vertices = (Vertex*) malloc(vertices_count * sizeof(Vertex));
+
+        for (int i = 0; i < colored_triangles_count; i++) {
+            std::getline(file, line);
+            model_triangles[i] = Triangle();
+            Triangle& t = model_triangles[i];
+
+            vector<string> tokens = Split(line, ' ');
+            stringstream(tokens[1]) >> t.vertex1;
+            stringstream(tokens[2]) >> t.vertex2;
+            stringstream(tokens[3]) >> t.vertex3;
+            stringstream(tokens[4]) >> t.fr;
+            stringstream(tokens[5]) >> t.fg;
+            stringstream(tokens[6]) >> t.fb;
+            stringstream(tokens[7]) >> t.br;
+            stringstream(tokens[8]) >> t.bg;
+            stringstream(tokens[9]) >> t.bb;
+        }
+
+        for (int i = 0; i < vertices_count; i++) {
+            std::getline(file, line);
+            model_vertices[i] = Vertex();
+            Vertex& v = model_vertices[i];
+
+            vector<string> tokens = Split(line, ' ');
+            stringstream(tokens[1]) >> v.x;
+            stringstream(tokens[2]) >> v.y;
+            stringstream(tokens[3]) >> v.z;
+            stringstream(tokens[4]) >> v.nx;
+            stringstream(tokens[5]) >> v.ny;
+            stringstream(tokens[6]) >> v.nz;
+
+            if (!min_max_initialized) {
+                min_vertex_x = v.x;
+                max_vertex_x = v.x;
+
+                min_vertex_y = v.y;
+                max_vertex_y = v.y;
+                
+                min_vertex_z = v.z;
+                max_vertex_z = v.z;
+
+                min_max_initialized = true;
+            }
+
+            min_vertex_x = (v.x < min_vertex_x) ? v.x : min_vertex_x;
+            max_vertex_x = (v.x > max_vertex_x) ? v.x : max_vertex_x;
+
+            min_vertex_y = (v.y < min_vertex_y) ? v.y : min_vertex_y;
+            max_vertex_y = (v.y > max_vertex_y) ? v.y : max_vertex_y;
+
+            min_vertex_z = (v.z < min_vertex_z) ? v.z : min_vertex_z;
+            max_vertex_z = (v.z > max_vertex_z) ? v.z : max_vertex_z;
+        }
+
+        GLfloat edge1_width = (max_vertex_x - min_vertex_x);
+        GLfloat edge2_width = (max_vertex_y - min_vertex_y);
+        GLfloat edge3_width = (max_vertex_z - min_vertex_z);
+
+        GLfloat model_center_x = (max_vertex_x + min_vertex_x) / 2.0;
+        GLfloat model_center_y = (max_vertex_y + min_vertex_y) / 2.0;
+        GLfloat model_center_z = (max_vertex_z + min_vertex_z) / 2.0;
+
+        calibration_offset_x = model_center_x - 0;
+        calibration_offset_y = model_center_y - 0;
+        calibration_offset_z = model_center_z - 0;
+
+        world_size = Max(edge1_width, edge2_width, edge3_width) * 3;
+
+        obj_is_custom_model = true;
+        not_freed = true;
+        MsgLabel->Caption = "Loaded model: " + filepath;
+
+        GLBox1->Invalidate();
     }
 }
 //---------------------------------------------------------------------------
+void __fastcall TForm1::ColorcubeModelBtnClick(TObject *Sender)
+{
+    scale = 1.0;
+    world_size = 10.0;
+    obj_is_custom_model = false;
 
+    if (not_freed) {
+        free(model_triangles);
+        free(model_vertices);
+        not_freed = false;
+    }
+
+    MsgLabel->Caption = "";
+    GLBox1->Invalidate();
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::FormDestroy(TObject *Sender) {
+    if (not_freed) {
+        free(model_triangles);
+        free(model_vertices);
+        not_freed = false;
+    }
+}
+//---------------------------------------------------------------------------
+vector<string> Split(const string& s, const char delimiter) {
+    stringstream ss(s);
+    string t;
+    vector<string> tokens;
+
+    while (std::getline(ss, t, delimiter)) {
+        if (t.length() > 0) {
+            tokens.push_back(t);
+        }
+    }
+    return tokens;
+}
+//---------------------------------------------------------------------------
+GLfloat Max(GLfloat v1, GLfloat v2, GLfloat v3) {
+    GLfloat max = v1;
+    if (v2 > max) max = v2;
+    if (v3 > max) max = v3;
+    return max;
+}

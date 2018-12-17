@@ -77,6 +77,7 @@ __published:	// IDE-managed Components
     TRadioButton *SilverMaterialBtn;
     TRadioButton *GoldMaterialBtn;
     TRadioButton *OriginalMaterialBtn;
+    TLabel *MsgLabel;
     void __fastcall draw(TObject *Sender);
     void __fastcall init(TObject *Sender);
     void __fastcall RotationXScrollBarChange(TObject *Sender);
@@ -114,6 +115,8 @@ __published:	// IDE-managed Components
     void __fastcall GoldMaterialBtnClick(TObject *Sender);
     void __fastcall OriginalMaterialBtnClick(TObject *Sender);
     void __fastcall OpenModelFileBtnClick(TObject *Sender);
+    void __fastcall FormDestroy(TObject *Sender);
+    void __fastcall ColorcubeModelBtnClick(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
     __fastcall TForm1(TComponent* Owner);

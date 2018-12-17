@@ -1,9 +1,11 @@
 object Form1: TForm1
-  Left = 311
-  Top = 67
+  Left = 358
+  Top = 80
   Width = 1054
-  Height = 775
-  Caption = '1071 Computer Graphics Final Project - U10516045 '#29579#20896#20013
+  Height = 784
+  Caption = 
+    'University of Taipei :: 1071 Computer Graphics Final Project - U' +
+    '10516045 '#29579#20896#20013
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -13,6 +15,13 @@ object Form1: TForm1
   OldCreateOrder = False
   PixelsPerInch = 96
   TextHeight = 13
+  object MsgLabel: TLabel
+    Left = 1030
+    Top = 736
+    Width = 3
+    Height = 13
+    Alignment = taRightJustify
+  end
   object GLBox1: TGLBox
     Left = 16
     Top = 16
@@ -259,8 +268,8 @@ object Form1: TForm1
       Top = 24
       Width = 153
       Height = 17
-      Max = 180
-      Min = -180
+      Max = 5
+      Min = -5
       PageSize = 0
       Position = 3
       TabOrder = 0
@@ -271,8 +280,8 @@ object Form1: TForm1
       Top = 48
       Width = 153
       Height = 17
-      Max = 180
-      Min = -180
+      Max = 5
+      Min = -5
       PageSize = 0
       Position = 3
       TabOrder = 1
@@ -283,8 +292,8 @@ object Form1: TForm1
       Top = 72
       Width = 153
       Height = 17
-      Max = 180
-      Min = -180
+      Max = 5
+      Min = -5
       PageSize = 0
       Position = 3
       TabOrder = 2
@@ -514,6 +523,7 @@ object Form1: TForm1
       Checked = True
       TabOrder = 0
       TabStop = True
+      OnClick = ColorcubeModelBtnClick
     end
     object OpenModelFileBtn: TRadioButton
       Left = 144
