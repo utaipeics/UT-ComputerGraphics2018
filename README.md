@@ -1,8 +1,6 @@
 # 1071 Computer Graphics
 Assignments from my Computer Graphics class. 
-
-#### Windows HW4 - Colorcube Controller (Rotation/Translation/Scaling)
-![scrot](https://github.com/aesophor/OpenGL-Projects/raw/master/assets/win_hw4.png)
+![scrot](https://github.com/aesophor/OpenGL-Projects/raw/master/assets/win_final.png)
 
 # Windows
 Windows versions are built under Borland C++ Builder.
