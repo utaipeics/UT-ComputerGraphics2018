@@ -23,6 +23,12 @@ GLfloat vertices[][3] = {
     {1.0, -1.0, 1.0}, {1.0, 1.0, 1.0}, {-1.0, 1.0, 1.0}
 };
 
+GLfloat normals[][3] = {
+    {-1.0, -1.0, -1.0}, {1.0, -1.0, -1.0}, {1.0, 1.0, -1.0},
+    {-1.0, 1.0, -1.0}, {-1.0, 1.0, -1.0}, {-1.0, -1.0, 1.0},
+    {1.0, -1.0, 1.0}, {1.0, 1.0, 1.0}, {-1.0, 1.0, 1.0}
+};
+
 GLfloat colors[][3] = {
     {0.0, 0.0, 0.0}, {1.0, 0.0, 0.0},
     {1.0, 1.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0},
@@ -77,7 +83,7 @@ void __fastcall TForm1::draw(TObject *Sender)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glOrtho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
+    glOrtho(-3.0, 3.0, -3.0, 3.0, -3.0, 3.0);
     gluLookAt(0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
     glEnable(GL_LIGHTING);
     glEnable(GL_COLOR_MATERIAL);
@@ -88,7 +94,7 @@ void __fastcall TForm1::draw(TObject *Sender)
     // Handle object rotation.
     // Make sure we rotate the object at (0, 0, 0).
     // Otherwise, it will revolve around (0, 0, 0).
-    glTranslatef(trans_x, trans_y, trans_z);
+    glTranslatef(trans_x * 3.0 / 180, trans_y * 3.0 / 180, trans_z * 3.0 / 180);
     glRotatef(theta_x, 1, 0, 0);
     glRotatef(theta_y, 0, 1, 0);
     glRotatef(theta_z, 0, 0, 1);
@@ -100,12 +106,19 @@ void __fastcall TForm1::draw(TObject *Sender)
 void DrawPolygon(int a, int b, int c, int d) {
     glBegin(GL_POLYGON);
         glColor3fv(colors[a]);
+        glNormal3fv(normals[a]);
         glVertex3fv(vertices[a]);
+
         glColor3fv(colors[b]);
+        glNormal3fv(normals[b]);
         glVertex3fv(vertices[b]);
+
         glColor3fv(colors[c]);
+        glNormal3fv(normals[c]);
         glVertex3fv(vertices[c]);
+
         glColor3fv(colors[d]);
+        glNormal3fv(normals[d]);
         glVertex3fv(vertices[d]);
     glEnd();
 }
@@ -126,7 +139,7 @@ void DrawLights() {
     GLfloat light0_ambient[] = { 0.0f, 0.0f, 0.0f, 0.0f };
     GLfloat light0_diffuse[] = { 1.0f, 0.0f, 0.0f, 1.0f };
     GLfloat light0_specular[] = { 1.0f, 0.0f, 0.0f, 1.0f };
-    GLfloat light0_position[] = { 4.0f, 0.0f, 4.0f, 1.0f };
+    GLfloat light0_position[] = { 4.0f, 0.0f, 0.0f, 1.0f };
 
     glLightfv(GL_LIGHT0, GL_AMBIENT, light0_ambient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
@@ -137,7 +150,7 @@ void DrawLights() {
     GLfloat light1_ambient[] = { 0.0f, 0.0f, 0.0f, 0.0f };
     GLfloat light1_diffuse[] = { 0.0f, 1.0f, 0.0f, 1.0f };
     GLfloat light1_specular[] = { 0.0f, 1.0f, 0.0f, 1.0f };
-    GLfloat light1_position[] = { 2.0f, 4.0f, 2.0f, 1.0f };
+    GLfloat light1_position[] = { 0.0f, 4.0f, 0.0f, 1.0f };
 
     glLightfv(GL_LIGHT1, GL_AMBIENT, light1_ambient);
     glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
@@ -148,7 +161,7 @@ void DrawLights() {
     GLfloat light2_ambient[] = { 0.0f, 0.0f, 0.0f, 0.0f };
     GLfloat light2_diffuse[] = { 0.0f, 0.0f, 1.0f, 1.0f };
     GLfloat light2_specular[] = { 0.0f, 0.0f, 1.0f, 1.0f };
-    GLfloat light2_position[] = { -4.0f, 0.0f, 4.0f, 1.0f };
+    GLfloat light2_position[] = { 0.0f, 0.0f, 4.0f, 1.0f };
 
     glLightfv(GL_LIGHT2, GL_AMBIENT, light2_ambient);
     glLightfv(GL_LIGHT2, GL_DIFFUSE, light2_diffuse);

@@ -247,21 +247,21 @@ object Form1: TForm1
       Top = 24
       Width = 6
       Height = 13
-      Caption = '3'
+      Caption = '1'
     end
     object ScalingYValueLabel: TLabel
       Left = 200
       Top = 48
       Width = 6
       Height = 13
-      Caption = '3'
+      Caption = '1'
     end
     object ScalingZValueLabel: TLabel
       Left = 200
       Top = 72
       Width = 6
       Height = 13
-      Caption = '3'
+      Caption = '1'
     end
     object ScalingXScrollBar: TScrollBar
       Left = 32
@@ -271,7 +271,7 @@ object Form1: TForm1
       Max = 5
       Min = -5
       PageSize = 0
-      Position = 3
+      Position = 1
       TabOrder = 0
       OnChange = ScalingXScrollBarChange
     end
@@ -283,7 +283,7 @@ object Form1: TForm1
       Max = 5
       Min = -5
       PageSize = 0
-      Position = 3
+      Position = 1
       TabOrder = 1
       OnChange = ScalingYScrollBarChange
     end
@@ -295,7 +295,7 @@ object Form1: TForm1
       Max = 5
       Min = -5
       PageSize = 0
-      Position = 3
+      Position = 1
       TabOrder = 2
       OnChange = ScalingZScrollBarChange
     end

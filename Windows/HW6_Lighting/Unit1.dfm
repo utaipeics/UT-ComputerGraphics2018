@@ -1,8 +1,8 @@
 object Form1: TForm1
-  Left = 273
-  Top = 223
-  Width = 1075
-  Height = 489
+  Left = 122
+  Top = 97
+  Width = 952
+  Height = 659
   Caption = 'Form1'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -16,15 +16,15 @@ object Form1: TForm1
   object GLBox1: TGLBox
     Left = 16
     Top = 16
-    Width = 425
-    Height = 425
+    Width = 593
+    Height = 593
     OnGLInit = init
     OnGLDraw = draw
   end
   object RotationGroupBox: TGroupBox
-    Left = 456
+    Left = 624
     Top = 16
-    Width = 321
+    Width = 305
     Height = 137
     Caption = 'Rotation'
     TabOrder = 1
@@ -106,7 +106,7 @@ object Form1: TForm1
     object ResetRotationBtn: TButton
       Left = 232
       Top = 32
-      Width = 73
+      Width = 57
       Height = 81
       Caption = 'Reset'
       TabOrder = 3
@@ -114,9 +114,9 @@ object Form1: TForm1
     end
   end
   object TranslationGroupBox: TGroupBox
-    Left = 456
+    Left = 624
     Top = 160
-    Width = 321
+    Width = 305
     Height = 137
     Caption = 'Translation'
     TabOrder = 2
@@ -198,7 +198,7 @@ object Form1: TForm1
     object ResetTranslationBtn: TButton
       Left = 232
       Top = 32
-      Width = 73
+      Width = 57
       Height = 81
       Caption = 'Reset'
       TabOrder = 3
@@ -206,9 +206,9 @@ object Form1: TForm1
     end
   end
   object ScalingGroupBox: TGroupBox
-    Left = 456
+    Left = 624
     Top = 304
-    Width = 321
+    Width = 305
     Height = 137
     Caption = 'Scaling'
     TabOrder = 3
@@ -293,7 +293,7 @@ object Form1: TForm1
     object ResetScalingBtn: TButton
       Left = 232
       Top = 32
-      Width = 73
+      Width = 57
       Height = 81
       Caption = 'Reset'
       TabOrder = 3
@@ -301,14 +301,14 @@ object Form1: TForm1
     end
   end
   object GroupBox1: TGroupBox
-    Left = 792
-    Top = 16
-    Width = 265
+    Left = 624
+    Top = 448
+    Width = 305
     Height = 97
     Caption = 'Isometric View'
     TabOrder = 4
     object Iso1Btn: TButton
-      Left = 8
+      Left = 16
       Top = 24
       Width = 57
       Height = 25
@@ -317,7 +317,7 @@ object Form1: TForm1
       OnClick = Iso1BtnClick
     end
     object IsoBtn2: TButton
-      Left = 72
+      Left = 88
       Top = 24
       Width = 57
       Height = 25
@@ -326,7 +326,7 @@ object Form1: TForm1
       OnClick = IsoBtn2Click
     end
     object Iso3Btn: TButton
-      Left = 136
+      Left = 160
       Top = 24
       Width = 57
       Height = 25
@@ -335,7 +335,7 @@ object Form1: TForm1
       OnClick = Iso3BtnClick
     end
     object Iso4Btn: TButton
-      Left = 200
+      Left = 232
       Top = 24
       Width = 57
       Height = 25
@@ -344,7 +344,7 @@ object Form1: TForm1
       OnClick = Iso4BtnClick
     end
     object Iso5Btn: TButton
-      Left = 8
+      Left = 16
       Top = 64
       Width = 57
       Height = 25
@@ -353,7 +353,7 @@ object Form1: TForm1
       OnClick = Iso5BtnClick
     end
     object Iso6Btn: TButton
-      Left = 72
+      Left = 88
       Top = 64
       Width = 57
       Height = 25
@@ -362,7 +362,7 @@ object Form1: TForm1
       OnClick = Iso6BtnClick
     end
     object Iso7Btn: TButton
-      Left = 136
+      Left = 160
       Top = 64
       Width = 57
       Height = 25
@@ -371,7 +371,7 @@ object Form1: TForm1
       OnClick = Iso7BtnClick
     end
     object Iso8Btn: TButton
-      Left = 200
+      Left = 232
       Top = 64
       Width = 57
       Height = 25
@@ -381,14 +381,14 @@ object Form1: TForm1
     end
   end
   object GroupBox2: TGroupBox
-    Left = 792
-    Top = 128
-    Width = 265
-    Height = 49
+    Left = 624
+    Top = 552
+    Width = 305
+    Height = 57
     Caption = 'Lighting'
     TabOrder = 5
     object RedLightBox: TCheckBox
-      Left = 8
+      Left = 24
       Top = 24
       Width = 49
       Height = 17
@@ -399,7 +399,7 @@ object Form1: TForm1
       OnClick = RedLightBoxClick
     end
     object GreenLightBox: TCheckBox
-      Left = 96
+      Left = 120
       Top = 24
       Width = 57
       Height = 17
@@ -410,7 +410,7 @@ object Form1: TForm1
       OnClick = GreenLightBoxClick
     end
     object BlueLightBox: TCheckBox
-      Left = 192
+      Left = 224
       Top = 24
       Width = 49
       Height = 17

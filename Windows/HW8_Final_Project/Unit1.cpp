@@ -19,8 +19,11 @@ using std::stringstream;
 void RenderObject(int viewport_x, int viewport_y, int viewport_width, int viewport_height,
         GLfloat ortho_size, GLfloat cam_x, GLfloat cam_y, GLfloat cam_z,
         GLfloat cam_nx, GLfloat cam_ny, GLfloat cam_nz);
+        
 void DrawTriangle(GLfloat* vertex1, GLfloat* vertex2, GLfloat* vertex3,
+        GLfloat* normal1, GLfloat* normal2, GLfloat* normal3,
         GLfloat* front_color, GLfloat* back_color);
+
 void DrawPolygon(int a, int b, int c, int d);
 void DrawColorCube();
 void DrawCustomModel();
@@ -34,6 +37,12 @@ vector<string> Split(const string& s, const char delimiter);
 GLfloat vertices[][3] = {
     {-1.0, -1.0, -1.0}, {1.0, -1.0, -1.0},
     {1.0, 1.0, -1.0}, {-1.0, 1.0, -1.0}, {-1.0, -1.0, 1.0},
+    {1.0, -1.0, 1.0}, {1.0, 1.0, 1.0}, {-1.0, 1.0, 1.0}
+};
+
+GLfloat normals[][3] = {
+    {-1.0, -1.0, -1.0}, {1.0, -1.0, -1.0}, {1.0, 1.0, -1.0},
+    {-1.0, 1.0, -1.0}, {-1.0, 1.0, -1.0}, {-1.0, -1.0, 1.0},
     {1.0, -1.0, 1.0}, {1.0, 1.0, 1.0}, {-1.0, 1.0, 1.0}
 };
 
@@ -64,21 +73,17 @@ int vertices_count;
 GLfloat calibration_offset_x, calibration_offset_y, calibration_offset_z;
 
 /* Lights */
-GLfloat red_light_ambient[] = { 0.3f, 0.0f, 0.0f, 0.0f };
-GLfloat red_light_diffuse[] = { 1.0f, 0.0f, 0.0f, 1.0f };
-GLfloat red_light_specular[] = { 1.0f, 0.0f, 0.0f, 1.0f };
+GLfloat red_light_ambient[] = { 0.2f, 0.0f, 0.0f, 0.0f };
+GLfloat red_light_diffuse[] = { 0.9f, 0.0f, 0.0f, 1.0f };
+GLfloat red_light_specular[] = { 0.9f, 0.0f, 0.0f, 1.0f };
 
-GLfloat green_light_ambient[] = { 0.0f, 0.3f, 0.0f, 0.0f };
-GLfloat green_light_diffuse[] = { 0.0f, 1.0f, 0.0f, 1.0f };
-GLfloat green_light_specular[] = { 0.0f, 1.0f, 0.0f, 1.0f };
+GLfloat green_light_ambient[] = { 0.0f, 0.2f, 0.0f, 0.0f };
+GLfloat green_light_diffuse[] = { 0.0f, 0.9f, 0.0f, 1.0f };
+GLfloat green_light_specular[] = { 0.0f, 0.9f, 0.0f, 1.0f };
 
-GLfloat blue_light_ambient[] = { 0.0f, 0.0f, 0.3f, 0.0f };
-GLfloat blue_light_diffuse[] = { 0.0f, 0.0f, 1.0f, 1.0f };
-GLfloat blue_light_specular[] = { 0.0f, 0.0f, 1.0f, 1.0f };
-
-GLfloat light0_position[] = { 8.0f, 0.0f, 8.0f, 1.0f };
-GLfloat light1_position[] = { 4.0f, 8.0f, 4.0f, 1.0f };
-GLfloat light2_position[] = { -8.0f, 0.0f, 8.0f, 1.0f };
+GLfloat blue_light_ambient[] = { 0.0f, 0.0f, 0.2f, 0.0f };
+GLfloat blue_light_diffuse[] = { 0.0f, 0.0f, 0.9f, 1.0f };
+GLfloat blue_light_specular[] = { 0.0f, 0.0f, 0.9f, 1.0f };
 
 /* Materials */
 GLfloat* selected_material_ambient;
@@ -101,7 +106,6 @@ GLfloat gold_specular[] = { 0.628281f, 0.555802f, 0.366065f, 1.0f };
 TForm1 *Form1;
 GLfloat world_size;
 GLfloat cam_dist;
-GLfloat scale;
 GLfloat theta_x, theta_y, theta_z;
 GLfloat trans_x, trans_y, trans_z;
 GLfloat scale_x, scale_y, scale_z;
@@ -118,15 +122,14 @@ __fastcall TForm1::TForm1(TComponent* Owner)
     colored_triangles_count = 0;
     vertices_count = 0;
 
-    world_size = 10.0f;
+    world_size = 3.0f;
     cam_dist = 0.5f;
 
     calibration_offset_x = calibration_offset_y = calibration_offset_z = 0;
 
-    scale = 1.0;
     theta_x = theta_y = theta_z = 0;
     trans_x = trans_y = trans_z = 0;
-    scale_x = scale_y = scale_z = 3;
+    scale_x = scale_y = scale_z = 1;
 
     shading_mode = GL_SMOOTH;
     
@@ -157,7 +160,7 @@ void __fastcall TForm1::draw(TObject *Sender) {
     // Shading
     glPolygonMode(GL_FRONT, (shading_mode == GL_LINE) ? GL_LINE : GL_FILL);
     glPolygonMode(GL_BACK, (shading_mode == GL_LINE) ? GL_LINE : GL_FILL);
-    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
     glShadeModel(shading_mode);
 
     // Lighting
@@ -171,8 +174,8 @@ void __fastcall TForm1::draw(TObject *Sender) {
 
     // Material
     if (selected_material_ambient && selected_material_diffuse && selected_material_specular) {
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, selected_material_ambient);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, selected_material_diffuse);        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, selected_material_specular);
+        glMaterialfv(GL_FRONT, GL_AMBIENT, selected_material_ambient);
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, selected_material_diffuse);        glMaterialfv(GL_FRONT, GL_SPECULAR, selected_material_specular);
     }
 
     // Render object(s)
@@ -227,8 +230,7 @@ void RenderObject(int viewport_x, int viewport_y, int viewport_width, int viewpo
     glScalef(scale_x, scale_y, scale_z);
 
     if (obj_is_custom_model) {
-        glRotatef(-92, 1, 0, 0);
-        glRotatef(-4, 0, 1, 0);
+        glRotatef(-90, 1, 0, 0);
         DrawCustomModel();
     } else {
         DrawColorCube();
@@ -236,6 +238,7 @@ void RenderObject(int viewport_x, int viewport_y, int viewport_width, int viewpo
 }
 
 void DrawTriangle(GLfloat* vertex1, GLfloat* vertex2, GLfloat* vertex3,
+        GLfloat* normal1, GLfloat* normal2, GLfloat* normal3,
         GLfloat* front_color, GLfloat* back_color) {
 
     glBegin(GL_TRIANGLES);
@@ -243,8 +246,11 @@ void DrawTriangle(GLfloat* vertex1, GLfloat* vertex2, GLfloat* vertex3,
         
         glCullFace(GL_BACK);
         glColor3fv(front_color);
+        glNormal3fv(normal1);
         glVertex3fv(vertex1);
+        glNormal3fv(normal2);
         glVertex3fv(vertex2);
+        glNormal3fv(normal3);
         glVertex3fv(vertex3);
 
         glCullFace(GL_FRONT);
@@ -258,12 +264,19 @@ void DrawTriangle(GLfloat* vertex1, GLfloat* vertex2, GLfloat* vertex3,
 void DrawPolygon(int a, int b, int c, int d) {
     glBegin(GL_POLYGON);
         glColor3fv(colors[a]);
+        glNormal3fv(normals[a]);
         glVertex3fv(vertices[a]);
+
         glColor3fv(colors[b]);
+        glNormal3fv(normals[b]);
         glVertex3fv(vertices[b]);
+
         glColor3fv(colors[c]);
+        glNormal3fv(normals[c]);
         glVertex3fv(vertices[c]);
+
         glColor3fv(colors[d]);
+        glNormal3fv(normals[d]);
         glVertex3fv(vertices[d]);
     glEnd();
 }
@@ -293,16 +306,25 @@ void DrawCustomModel() {
         GLfloat vertex1[3] = { v1.x - calibration_offset_x, v1.y - calibration_offset_y, v1.z - calibration_offset_z};
         GLfloat vertex2[3] = { v2.x - calibration_offset_x, v2.y - calibration_offset_y, v2.z - calibration_offset_z};
         GLfloat vertex3[3] = { v3.x - calibration_offset_x, v3.y - calibration_offset_y, v3.z - calibration_offset_z};
+
+        GLfloat normal1[3] = { v1.nx, v1.ny, v1.nz };
+        GLfloat normal2[3] = { v2.nx, v2.ny, v2.nz };
+        GLfloat normal3[3] = { v3.nx, v3.ny, v3.nz };
+
         GLfloat front_color[3] = { fr, fg, fb };
         GLfloat back_color[3] = { br, bg, bb };
 
-        DrawTriangle(vertex1, vertex2, vertex3, front_color, back_color);
+        DrawTriangle(vertex1, vertex2, vertex3, normal1, normal2, normal3, front_color, back_color);
     }
 }
 
 void DrawLights() {
     GLfloat global_ambient[] = { 0.2f, 0.2f, 0.2f, 0.0f };
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
+
+    GLfloat light0_position[] = { world_size * 2, 0.0f, 0, 1.0f };
+    GLfloat light1_position[] = { 0.0f, world_size * 2, 0.0f, 1.0f };
+    GLfloat light2_position[] = { 0.0f, 0.0f, world_size * 2, 1.0f };
 
     glLightfv(GL_LIGHT0, GL_AMBIENT, red_light_ambient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, red_light_diffuse);
@@ -442,17 +464,17 @@ void __fastcall TForm1::ScalingZScrollBarChange(TObject *Sender) {
 }
 
 void __fastcall TForm1::ResetScalingBtnClick(TObject *Sender) {
-    scale_x = 3;
-    scale_y = 3;
-    scale_z = 3;
+    scale_x = 1;
+    scale_y = 1;
+    scale_z = 1;
 
-    ScalingXScrollBar->Position = 3;
-    ScalingYScrollBar->Position = 3;
-    ScalingZScrollBar->Position = 3;
+    ScalingXScrollBar->Position = 1;
+    ScalingYScrollBar->Position = 1;
+    ScalingZScrollBar->Position = 1;
 
-    ScalingXValueLabel->Caption = 3;
-    ScalingYValueLabel->Caption = 3;
-    ScalingZValueLabel->Caption = 3;
+    ScalingXValueLabel->Caption = 1;
+    ScalingYValueLabel->Caption = 1;
+    ScalingZValueLabel->Caption = 1;
 
     GLBox1->Invalidate();
 }
@@ -691,20 +713,22 @@ void __fastcall TForm1::OpenModelFileBtnClick(TObject *Sender) {
         calibration_offset_y = model_center_y - 0;
         calibration_offset_z = model_center_z - 0;
 
-        world_size = Max(edge1_width, edge2_width, edge3_width) * 3;
+        world_size = Max(edge1_width, edge2_width, edge3_width);
 
         obj_is_custom_model = true;
         not_freed = true;
         MsgLabel->Caption = "Loaded model: " + filepath;
 
         GLBox1->Invalidate();
+    } else {
+        OpenModelFileBtn->Checked = false;
+        ColorcubeModelBtn->Checked = true;
     }
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ColorcubeModelBtnClick(TObject *Sender)
 {
-    scale = 1.0;
-    world_size = 10.0;
+    world_size = 3.0;
     obj_is_custom_model = false;
 
     if (not_freed) {
