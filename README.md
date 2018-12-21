@@ -1,6 +1,6 @@
 # 1071 Computer Graphics
 Assignments from my Computer Graphics class. 
-![scrot](https://github.com/aesophor/OpenGL-Projects/raw/master/assets/win_final.png)
+![scrot](https://github.com/aesophor/OpenGL-Projects/raw/master/win_final.png)
 
 # Windows
 Windows versions are built under Borland C++ Builder.
